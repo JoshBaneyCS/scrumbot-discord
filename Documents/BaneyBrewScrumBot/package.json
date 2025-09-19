@@ -1,0 +1,21 @@
+{
+"name": "scrum-bot",
+"version": "1.0.0",
+"type": "module",
+"description": "Discord bot that runs Scrum ceremonies: daily standup, planning poker, retros, and reminders.",
+"main": "src/index.js",
+"scripts": {
+"start": "node src/index.js",
+"dev": "node --watch src/index.js",
+"register": "node src/commands.js"
+},
+"engines": {
+"node": ">=20"
+},
+"dependencies": {
+"better-sqlite3": "^11.3.0",
+"discord.js": "^14.16.3",
+"dotenv": "^16.4.5",
+"node-cron": "^3.0.3"
+}
+}
