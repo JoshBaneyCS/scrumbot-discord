@@ -1,0 +1,104 @@
+{
+  "_comment": "Discord Scrum Bot (Node.js 20) – runs standups, retros, planning poker",
+  "meta": {
+    "version": "PTDL_v2",
+    "update_url": null
+  },
+  "exported_at": "2025-09-19T00:00:00+00:00",
+  "name": "Discord Scrum Bot (Node 20)",
+  "author": "you@example.com",
+  "description": "Node.js 20 Discord Scrum Bot with SQLite persistence, daily standup reminders, retros (Keep/Drop/Try), and planning poker.",
+  "features": null,
+  "docker_images": {
+    "ghcr.io/parkervcp/yolks:nodejs_20": "ghcr.io/parkervcp/yolks:nodejs_20"
+  },
+  "file_denylist": [],
+  "startup": "bash -lc 'if [ \"${REGISTER_ON_BOOT}\" = \"1\" ]; then node src/commands.js; fi; node src/index.js'",
+  "config": {
+    "files": "{}",
+    "startup": "{\n  \"done\": \"Logged in as\"\n}",
+    "logs": "{\n  \"custom\": true,\n  \"location\": \"logs/latest.log\"\n}",
+    "stop": "^C"
+  },
+  "scripts": {
+    "installation": {
+      "script": "set -e\ncd /home/container\n\n# If a repo is provided, clone/pull it. Otherwise assume files were uploaded via SFTP.\nif [ -n \"${REPO_URL}\" ]; then\n  if [ -d .git ]; then\n    echo \"[install] Existing repo detected; fetching...\"\n    git fetch --all --prune\n    git checkout ${BRANCH:-main}\n    git pull --rebase origin ${BRANCH:-main}\n  else\n    echo \"[install] Cloning ${REPO_URL} (${BRANCH:-main})...\"\n    git clone --branch ${BRANCH:-main} ${REPO_URL} .\n  fi\nfi\n\n# Install dependencies\nif [ -f package-lock.json ]; then\n  npm ci --no-audit --no-fund\nelse\n  npm i --no-audit --no-fund\nfi\n\necho \"[install] Creating .env from panel variables...\"\ncat > .env <<EOF\nDISCORD_TOKEN=${DISCORD_TOKEN}\nAPPLICATION_ID=${APPLICATION_ID}\nGUILD_ID=${GUILD_ID}\nDEFAULT_TZ=${DEFAULT_TZ}\nDATABASE_PATH=${DATABASE_PATH}\nEOF\n\n# Create logs dir for panel tail (optional)\nmkdir -p logs\n: > logs/latest.log\n\necho \"[install] Done. Start the server to run the bot.\"\n",
+      "container": "ghcr.io/parkervcp/yolks:nodejs_20",
+      "entrypoint": "bash"
+    }
+  },
+  "variables": [
+    {
+      "name": "Discord Bot Token",
+      "description": "Your bot token from the Discord Developer Portal.",
+      "env_variable": "DISCORD_TOKEN",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|max:200"
+    },
+    {
+      "name": "Application ID",
+      "description": "Discord Application (Client) ID used for slash commands.",
+      "env_variable": "APPLICATION_ID",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|max:40"
+    },
+    {
+      "name": "Guild ID (optional)",
+      "description": "If set, commands register instantly in this guild. Leave blank for global (takes longer).",
+      "env_variable": "GUILD_ID",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|string|max:40"
+    },
+    {
+      "name": "Default Timezone",
+      "description": "IANA timezone for reminders.",
+      "env_variable": "DEFAULT_TZ",
+      "default_value": "America/New_York",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|max:60"
+    },
+    {
+      "name": "Database Path",
+      "description": "SQLite file path (relative to /home/container).",
+      "env_variable": "DATABASE_PATH",
+      "default_value": "./scrum.sqlite",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|max:100"
+    },
+    {
+      "name": "Register Commands On Boot",
+      "description": "If 1, runs `node src/commands.js` at startup to (re)register slash commands.",
+      "env_variable": "REGISTER_ON_BOOT",
+      "default_value": "0",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|in:0,1"
+    },
+    {
+      "name": "Git Repository URL (optional)",
+      "description": "Provide a Git URL to auto-deploy the bot code on install.",
+      "env_variable": "REPO_URL",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|string|max:200"
+    },
+    {
+      "name": "Git Branch (optional)",
+      "description": "Branch to clone if REPO_URL is set.",
+      "env_variable": "BRANCH",
+      "default_value": "main",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|string|max:100"
+    }
+  ]
+}
